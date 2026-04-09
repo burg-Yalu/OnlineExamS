@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.oes.mapper.ExamArrangeMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.oes.entity.ExamArrange">
+        <id column="arrangeId" property="arrangeId"/>
+        <result column="examCode" property="examCode"/>
+        <result column="roomId" property="roomId"/>
+        <result column="arrangeDate" property="arrangeDate"/>
+        <result column="session" property="session"/>
+        <result column="startTime" property="startTime"/>
+        <result column="endTime" property="endTime"/>
+        <result column="totalSeats" property="totalSeats"/>
+        <result column="assignedSeats" property="assignedSeats"/>
+        <result column="status" property="status"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT ea.*, er.roomName, er.roomLocation
+        FROM exam_arrange ea
+        LEFT JOIN exam_room er ON ea.roomId = er.roomId
+        ORDER BY ea.arrangeDate, ea.session, ea.arrangeId
+    </select>
+
+    <select id="findByExamCode" resultMap="BaseResultMap">
+        SELECT ea.*, er.roomName, er.roomLocation
+        FROM exam_arrange ea
+        LEFT JOIN exam_room er ON ea.roomId = er.roomId
+        WHERE ea.examCode = #{examCode}
+        ORDER BY ea.arrangeDate, ea.session
+    </select>
+
+    <select id="findByRoomAndDate" resultMap="BaseResultMap">
+        SELECT ea.*, er.roomName, er.roomLocation
+        FROM exam_arrange ea
+        LEFT JOIN exam_room er ON ea.roomId = er.roomId
+        WHERE ea.roomId = #{roomId}
+        AND ea.arrangeDate = #{date}
+        ORDER BY ea.session
+    </select>
+
+    <insert id="insert" parameterType="com.rabbiter.oes.entity.ExamArrange" useGeneratedKeys="true" keyProperty="arrangeId">
+        INSERT INTO exam_arrange (examCode, roomId, arrangeDate, session, startTime, endTime, totalSeats, assignedSeats, status)
+        VALUES (#{examCode}, #{roomId}, #{arrangeDate}, #{session}, #{startTime}, #{endTime}, #{totalSeats}, 0, '0')
+    </insert>
+
+    <update id="update" parameterType="com.rabbiter.oes.entity.ExamArrange">
+        UPDATE exam_arrange
+        SET roomId = #{roomId},
+            arrangeDate = #{arrangeDate},
+            session = #{session},
+            startTime = #{startTime},
+            endTime = #{endTime},
+            totalSeats = #{totalSeats},
+            status = #{status}
+        WHERE arrangeId = #{arrangeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM exam_arrange WHERE arrangeId = #{arrangeId}
+    </delete>
+
+    <update id="updateAssignedSeats">
+        UPDATE exam_arrange
+        SET assignedSeats = assignedSeats + #{increment}
+        WHERE arrangeId = #{arrangeId}
+    </update>
+
+    <update id="autoArrangeExam">
+        INSERT INTO exam_arrange (examCode, roomId, arrangeDate, session, totalSeats, assignedSeats, status)
+        SELECT #{examCode}, roomId, #{date}, #{session}, #{studentCount}, 0, '0'
+        FROM exam_room
+        WHERE roomCapacity &gt;= #{studentCount}
+        AND availableSeats &gt;= #{studentCount}
+        AND status = '0'
+        AND roomId NOT IN (
+            SELECT DISTINCT roomId
+            FROM exam_arrange
+            WHERE arrangeDate = #{date}
+            AND session = #{session}
+            AND status IN ('1', '2')
+        )
+        LIMIT 1
+    </update>
+
+    <select id="getTotalSeatsByExam" resultType="int">
+        SELECT COALESCE(SUM(totalSeats), 0)
+        FROM exam_arrange
+        WHERE examCode = #{examCode}
+        AND status IN ('0', '1')
+    </select>
+
+    <select id="checkTimeConflict" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_arrange
+        WHERE roomId = #{roomId}
+        AND arrangeDate = #{date}
+        AND session = #{session}
+        AND arrangeId != #{excludeArrangeId}
+        AND status IN ('1', '2')
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT ea.*, er.roomName, er.roomLocation
+        FROM exam_arrange ea
+        LEFT JOIN exam_room er ON ea.roomId = er.roomId
+        WHERE ea.arrangeId = #{arrangeId}
+    </select>
+
+</mapper>

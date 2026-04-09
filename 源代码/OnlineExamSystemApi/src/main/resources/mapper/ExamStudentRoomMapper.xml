@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.oes.mapper.ExamStudentRoomMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.oes.entity.ExamStudentRoom">
+        <id column="assignId" property="assignId"/>
+        <result column="examCode" property="examCode"/>
+        <result column="studentId" property="studentId"/>
+        <result column="roomId" property="roomId"/>
+        <result column="seatId" property="seatId"/>
+        <result column="assignTime" property="assignTime"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <select id="findByStudentId" resultMap="BaseResultMap">
+        SELECT esr.*, ea.arrangeDate, ea.session, es.seatNumber, er.roomName
+        FROM exam_student_room esr
+        LEFT JOIN exam_arrange ea ON esr.examCode = ea.examCode
+        LEFT JOIN exam_seat es ON esr.seatId = es.seatId
+        LEFT JOIN exam_room er ON esr.roomId = er.roomId
+        WHERE esr.studentId = #{studentId}
+        ORDER BY ea.arrangeDate, ea.session
+    </select>
+
+    <select id="findByExamCode" resultMap="BaseResultMap">
+        SELECT esr.*, s.studentName, es.seatNumber, er.roomName
+        FROM exam_student_room esr
+        LEFT JOIN student s ON esr.studentId = s.studentId
+        LEFT JOIN exam_seat es ON esr.seatId = es.seatId
+        LEFT JOIN exam_room er ON esr.roomId = er.roomId
+        WHERE esr.examCode = #{examCode}
+        ORDER BY er.roomId, es.seatNumber
+    </select>
+
+    <select id="findStudentsInRoom" resultMap="BaseResultMap">
+        SELECT esr.*, s.studentName, es.seatNumber
+        FROM exam_student_room esr
+        LEFT JOIN student s ON esr.studentId = s.studentId
+        LEFT JOIN exam_seat es ON esr.seatId = es.seatId
+        WHERE esr.examCode = #{examCode}
+        AND esr.roomId = #{roomId}
+        ORDER BY es.seatNumber
+    </select>
+
+    <insert id="insert" parameterType="com.rabbiter.oes.entity.ExamStudentRoom" useGeneratedKeys="true" keyProperty="assignId">
+        INSERT INTO exam_student_room (examCode, studentId, roomId, seatId, status)
+        VALUES (#{examCode}, #{studentId}, #{roomId}, #{seatId}, #{status})
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO exam_student_room (examCode, studentId, roomId, seatId, status)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.examCode}, #{item.studentId}, #{item.roomId}, #{item.seatId}, #{item.status})
+        </foreach>
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE exam_student_room SET status = #{status} WHERE assignId = #{assignId}
+    </update>
+
+    <delete id="deleteByStudentId">
+        DELETE FROM exam_student_room
+        WHERE studentId = #{studentId} AND examCode = #{examCode}
+    </delete>
+
+    <select id="checkStudentAssigned" resultType="int">
+        SELECT COUNT(*) FROM exam_student_room
+        WHERE studentId = #{studentId} AND examCode = #{examCode}
+    </select>
+
+</mapper>

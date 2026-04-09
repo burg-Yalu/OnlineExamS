@@ -1,0 +1,14 @@
+以下配置操作前，确保要有idea，jdk1.8, maven3.6.1, mysql ,navicat ,node14 ，相关环境！！！
+
+
+第一步：把酒店管理系统\源码\OnlineExamSystemApi文件夹拖进idea里面
+第二步：配置maven,把maven导入
+第三步：选择jdk1.8的Java环境
+第四步：navicat连接mysql,把数据库文件导入（在线考试系统\源码\OnlineExamSystemApi\src\main\resources\application.yml里面修改你的数据库库密码）
+第五步：Application类中启动后端
+第六步：在idea里面通过dev启动前端，
+              或者在线考试系统\源码\OnlineExamSystemVue这个目录下面输入cmd,命令行里面输入npm run dev启动前端，
+              或者把OnlineExamSystemVue文件夹拖到VScode里面，在终端里面输入npm run dev启动前端，
+第七步：浏览器里面输入运行出来的网址就会登录页面，系统管理员账号密码：9991  123456
+                                                                                          老师账号密码：    20081001  123456
+                                                                                          学生账号密码：   20224001   123456（更多的账号密码在数据库里面查看）

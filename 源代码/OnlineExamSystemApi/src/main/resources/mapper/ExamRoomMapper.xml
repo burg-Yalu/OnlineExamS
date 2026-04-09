@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.oes.mapper.ExamRoomMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.oes.entity.ExamRoom">
+        <id column="roomId" property="roomId"/>
+        <result column="roomName" property="roomName"/>
+        <result column="roomLocation" property="roomLocation"/>
+        <result column="roomCapacity" property="roomCapacity"/>
+        <result column="availableSeats" property="availableSeats"/>
+        <result column="equipment" property="equipment"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT * FROM exam_room ORDER BY roomId
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM exam_room WHERE roomId = #{roomId}
+    </select>
+
+    <select id="findAvailableRooms" resultMap="BaseResultMap">
+        SELECT * FROM exam_room
+        WHERE roomCapacity &gt;= #{capacity}
+        AND availableSeats &gt;= #{capacity}
+        AND status = '0'
+        AND roomId NOT IN (
+            SELECT DISTINCT roomId
+            FROM exam_arrange
+            WHERE arrangeDate = #{date}
+            AND session = #{session}
+            AND status IN ('1', '2')
+        )
+        ORDER BY roomName
+    </select>
+
+    <insert id="insert" parameterType="com.rabbiter.oes.entity.ExamRoom" useGeneratedKeys="true" keyProperty="roomId">
+        INSERT INTO exam_room (roomName, roomLocation, roomCapacity, availableSeats, equipment, status, description)
+        VALUES (#{roomName}, #{roomLocation}, #{roomCapacity}, #{roomCapacity}, #{equipment}, #{status}, #{description})
+    </insert>
+
+    <update id="update" parameterType="com.rabbiter.oes.entity.ExamRoom">
+        UPDATE exam_room
+        SET roomName = #{roomName},
+            roomLocation = #{roomLocation},
+            roomCapacity = #{roomCapacity},
+            equipment = #{equipment},
+            status = #{status},
+            description = #{description}
+        WHERE roomId = #{roomId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM exam_room WHERE roomId = #{roomId}
+    </delete>
+
+    <update id="updateAvailableSeats">
+        UPDATE exam_room
+        SET availableSeats = availableSeats + #{change}
+        WHERE roomId = #{roomId}
+    </update>
+
+    <select id="getRoomUsage" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_arrange
+        WHERE roomId = #{roomId}
+        AND arrangeDate = #{date}
+        AND session = #{session}
+        AND status IN ('1', '2')
+    </select>
+
+</mapper>
